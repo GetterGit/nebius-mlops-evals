@@ -120,11 +120,7 @@ def _compute_metrics(rows: list[dict]) -> dict[str, float]:
 
     for verdict, count in Counter(r["judge_verdict"] for r in rows).items():
         metrics[f"verdict_rate_{verdict}"] = count / n
-        # TODO (Task 1): also log per-verdict absolute counts as
-        # `judge_evaluations_total_{verdict}`. The `count` variable in scope
-        # is the integer count. Mirrors the Prometheus counter
-        # `judge_evaluations_total` from Task 4 (one MLflow metric name per
-        # verdict, since MLflow run-metrics don't carry labels). See tasks/task1.md.
+        metrics[f"judge_evaluations_total_{verdict}"] = float(count)
 
     total_cost = sum(r["total_cost_usd"] + r["judge_cost_usd"] for r in rows)
     metrics["total_cost_usd"] = total_cost
@@ -134,19 +130,17 @@ def _compute_metrics(rows: list[dict]) -> dict[str, float]:
     # Latency aggregates. Mean is a worked example below; you'll add p50 and p95.
     latencies = [r["total_latency_seconds"] for r in rows]
     metrics["avg_latency_seconds"] = sum(latencies) / n
-    # TODO (Task 1): add `request_latency_p50_seconds` and
-    # `request_latency_p95_seconds`. Use `np.percentile(latencies, ...)` and
-    # wrap with `float(...)` before storing. Mirrors the Prometheus histogram
-    # quantiles for `chat_request_duration_seconds` from Task 4.
-    # See tasks/task1.md.
+    metrics["request_latency_p50_seconds"] = float(np.percentile(latencies, 50))
+    metrics["request_latency_p95_seconds"] = float(np.percentile(latencies, 95))
 
     # Token aggregates. Input side is a worked example; you'll add output side.
     in_toks = [r["total_input_tokens"] for r in rows]
     metrics["total_input_tokens"] = float(sum(in_toks))
     metrics["mean_input_tokens"] = sum(in_toks) / n
-    # TODO (Task 1): add `total_output_tokens` and `mean_output_tokens`,
-    # mirroring the input-token pattern. Each row has `total_output_tokens`.
-    # See tasks/task1.md.
+
+    out_toks = [r["total_output_tokens"] for r in rows]
+    metrics["total_output_tokens"] = float(sum(out_toks))
+    metrics["mean_output_tokens"] = sum(out_toks) / n
 
     return metrics
 

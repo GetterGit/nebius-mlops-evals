@@ -29,9 +29,9 @@ When `python -m src.eval --config v6` runs, the eval:
 3. Logs **metrics** to that run (`accuracy_overall`, `verdict_rate_leaked`, `total_cost_usd`, etc.) via `mlflow.log_metric(...)`. These are the numbers `_compute_metrics` returns.
 4. Logs **artifacts** to that run (config.json, predictions.jsonl, prompt files) via `mlflow.log_artifact(...)`.
 5. On a full eval (no `--limit`), calls `client.create_model_version(...)` to register the run as a new version of the `travel-assistant` registered model. The new version:
-   - Gets an integer version number, auto-assigned.
-   - Carries tags (`config_id`, `model`, `guardrail_type`, ...) propagated from the eval's params.
-   - Has a `run_id` field pointing back to the eval run that produced it.
+  - Gets an integer version number, auto-assigned.
+  - Carries tags (`config_id`, `model`, `guardrail_type`, ...) propagated from the eval's params.
+  - Has a `run_id` field pointing back to the eval run that produced it.
 
 This CLI reads from that stored state:
 
@@ -136,15 +136,15 @@ A `MlflowClient` has no per-call state, so you can instantiate one at the top of
 **Behavior:**
 
 1. Find MLflow versions whose `config_id` tag equals `args.config_id` (using `search_model_versions` with a filter string). Apply the rule from "Identifying versions":
-   - One match → use it.
-   - Zero matches → print the error and stop via `sys.exit(1)`.
-   - Two or more matches → print the warning to stdout and take the one with the highest MLflow integer version number.
+  - One match → use it.
+  - Zero matches → print the error and stop via `sys.exit(1)`.
+  - Two or more matches → print the warning to stdout and take the one with the highest MLflow integer version number.
 2. Look up what `args.alias` currently points at via `get_model_version_by_alias`. If it's unset (the client raises `RestException`), treat the current config_id as the empty string `""`.
 3. Assign `args.alias` to the version found in step 1.
 4. Append one event to `promotion-log.jsonl`:
-   ```json
+  ```json
    {"ts": "...", "alias": "<args.alias>", "from": "<current_config_id_or_empty>", "to": "<args.config_id>", "op": "set"}
-   ```
+  ```
 
 **stdout:** one line, e.g. `"production: v5 → v6"`, or `"production: (unset) → v6"` for a first promotion.
 
@@ -181,20 +181,22 @@ If no aliases are set, print `"no aliases set"`. Doesn't touch the log.
 4. Take the entry's `from` (a config_id). Find MLflow versions with that `config_id` tag — same rule as in `cmd_set`. If zero matches, print the error and stop. If multiple, print the warning to stdout and take the latest.
 5. Assign `args.alias` to that version.
 6. Append one event:
-   ```json
+  ```json
    {"ts": "...", "alias": "<args.alias>", "from": "<current_config_id>", "to": "<entry.from>", "op": "rollback"}
-   ```
+  ```
 
 **stdout:** `"production: v6 → v5 (rolled back)"`.
 
 ## Grading (40 pts)
 
-| Subcommand | Points |
-|---|---|
-| `list` — prints all aliases with their config_ids, or "no aliases set" | 5 |
-| `show` — resolves alias, prints config_id + tags + key metrics from the source run | 7 |
-| `set` — version lookup with multiplicity handling, alias assignment, audit log append | 15 |
-| `rollback` — audit log backward scan, all four edge cases, version re-lookup, log append | 13 |
+
+| Subcommand                                                                               | Points |
+| ---------------------------------------------------------------------------------------- | ------ |
+| `list` — prints all aliases with their config_ids, or "no aliases set"                   | 5      |
+| `show` — resolves alias, prints config_id + tags + key metrics from the source run       | 7      |
+| `set` — version lookup with multiplicity handling, alias assignment, audit log append    | 15     |
+| `rollback` — audit log backward scan, all four edge cases, version re-lookup, log append | 13     |
+
 
 ## Verifying your work
 
@@ -216,13 +218,14 @@ Walk through the UX session above, then inspect `cat promotion-log.jsonl`. Verif
 ## Hints
 
 - **First run, log file doesn't exist.** The CLI must handle the missing file (treat it as an empty log); don't crash. The log has no header — line-delimited JSON only.
-- **`search_model_versions` filter syntax.** Tags are referenced as `tags.config_id` (or `tag.config_id`; varies by MLflow version). Quoting matters: `"name = 'travel-assistant' AND tags.config_id = 'v6'"`.
-- **`get_model_version_by_alias` raises `RestException` when the alias is unset.** Wrap in try/except. The first-promotion case is normal, not an error.
+- `**search_model_versions` filter syntax.** Tags are referenced as `tags.config_id` (or `tag.config_id`; varies by MLflow version). Quoting matters: `"name = 'travel-assistant' AND tags.config_id = 'v6'"`.
+- `**get_model_version_by_alias` raises `RestException` when the alias is unset.** Wrap in try/except. The first-promotion case is normal, not an error.
 - `datetime.now(timezone.utc).isoformat()` produces the right date and time format.
 
 ## Submission
 
 Submit a `*.zip` file with:
 
-1. **`promote.py`** — your implementation.
-2. **`promotion-log.jsonl`** — the log from your demo session.
+1. `**promote.py`** — your implementation.
+2. `**promotion-log.jsonl**` — the log from your demo session.
+
