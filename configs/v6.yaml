@@ -1,0 +1,18 @@
+display_name: "Sandwich (input + output validator)"
+description: "Input classifier in front + output validator. Over 2x faster Instruct model for the assistant compared to v5, however more expensive (60% on input, 25% on output). System prompt enhanced with critical rules."
+model:
+  name: Qwen/Qwen3-30B-A3B-Instruct-2507
+  temperature: 0.0
+system_prompt: prompts/v3_prompt_hardening.txt
+guardrail:
+  type: sandwich
+  input_classifier:
+    model:
+      name: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B
+      temperature: 0.0
+    prompt: prompts/classifier_input.txt
+  output_validator:
+    model:
+      name: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B
+      temperature: 0.0
+    prompt: prompts/classifier_output.txt
